@@ -58,6 +58,8 @@ public class _hmMusic extends Activity implements AnimationListener {
 	
 	private static final int MSG_SUCCESS = 0;  
     private static final int MSG_FAILURE = 1; 
+    private static final int MSG_SHOW_MENU=2;
+    private static final int MSG_DOWNLOAD_FINISH=3;
 	
 	private List<String> titleTagList = new ArrayList<String>();
 	private WebView mWebView;  
@@ -67,7 +69,7 @@ public class _hmMusic extends Activity implements AnimationListener {
 	private Button btnYes=null;
 	private Button btnNo=null;
 	public static config conf;
-	private SQLiteDatabase db = null;
+	private static SQLiteDatabase db = null;
 	
 	
 	private Handler mHandler = new Handler(){  
@@ -76,13 +78,21 @@ public class _hmMusic extends Activity implements AnimationListener {
             switch (msg.what) {  
             case MSG_SUCCESS:  
                 
-                Toast.makeText(getApplication(), "下载歌曲成功"+(String)msg.obj, Toast.LENGTH_LONG).show();    
+                Toast.makeText(getApplication(), "下载歌曲成功"+(String)msg.obj, Toast.LENGTH_LONG).show();  
+                mWebView.loadUrl("javascripr:onDownloadSucceed()");
                 break;   
   
             case MSG_FAILURE:    
             	mWebView.loadUrl("javascript:onDownloadError("+(String)msg.obj+")");
-                Toast.makeText(getApplication(), "下载歌曲失败"+(String)msg.obj, Toast.LENGTH_LONG).show();    
+                Toast.makeText(getApplication(), "下载歌曲失败"+(String)msg.obj, Toast.LENGTH_LONG).show(); 
                 break;  
+            case MSG_SHOW_MENU:
+            	openOptionsMenu();
+            	break;
+            case MSG_DOWNLOAD_FINISH:
+            	Toast.makeText(getApplicationContext(), "全部下载任务完成",Toast.LENGTH_SHORT).show();
+            	mWebView.loadUrl("javascripr:onDownloadAllFinish()");
+            	break;
             }  
             super.handleMessage(msg);  
         }  
@@ -112,6 +122,16 @@ public class _hmMusic extends Activity implements AnimationListener {
         {
         	conf.mainFrameUri=conf.Web_Uri;
         }
+        
+        conf.nameList=new LinkedList<String>();
+		conf.uriList=new LinkedList<String>();
+		conf.downloadingNameList=new LinkedList<String>();
+		conf.downLoadingUriList=new LinkedList<String>();
+		conf.offlineNameList=new LinkedList<String>();
+		conf.offlineUriList=new LinkedList<String>();
+		if(!conf.getCacheData(db, conf.offlineNameList, conf.offlineUriList))
+			Toast.makeText(getApplicationContext(), "获取缓存数据错误",Toast.LENGTH_SHORT).show();
+		conf.offlineCount=conf.offlineNameList.size();
     }
 
 	@SuppressLint({ "SetJavaScriptEnabled", "JavascriptInterface" })
@@ -136,27 +156,16 @@ public class _hmMusic extends Activity implements AnimationListener {
 	}
 	
 	final class DemoJavaScriptInterface {  
-        public List<String>nameList;
-        public List<String>uriList;
-        public int nowPlayingIndex=0;
-        public int counts=0;
         
-        public List<String>downloadingNameList;
-        public List<String>downLoadingUriList;
-        public int downloadCounts=0;
-        public int nowDownloading;
         
         
 		DemoJavaScriptInterface() {
-			nameList=new LinkedList<String>();
-			uriList=new LinkedList<String>();
-			downloadingNameList=new LinkedList<String>();
-			downLoadingUriList=new LinkedList<String>();
+			
 		}  
         
         
         @JavascriptInterface
-        public Boolean setPlayerSongUri(String uri)
+        public String setPlayerSongUri(String uri)
         {
         	try {
         		mp.stop();
@@ -177,31 +186,31 @@ public class _hmMusic extends Activity implements AnimationListener {
 				
 			} catch (IllegalArgumentException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (SecurityException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (IllegalStateException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			}
-        	return true;
+        	return "true";
         }
         
         @JavascriptInterface
-        public Boolean setPlayerSongIndex(int index)
+        public String setPlayerSongIndex(int index)
         {
         	
         	try {
         		mp.stop();
         		mp.reset();
-				mp.setDataSource(uriList.get(index));
+				mp.setDataSource(conf.uriList.get(index));
 				if(conf.setting.get("ifAutoDownload").equals("true"))
 				{
-					addToDownloadList(nameList.get(index),uriList.get(index));
+					addToDownloadList(conf.nameList.get(index),conf.uriList.get(index));
 				}
 				new Thread(){  
 	                public void run(){  
@@ -217,22 +226,28 @@ public class _hmMusic extends Activity implements AnimationListener {
 	                }  
 	            }.start();  
 	            
-				this.nowPlayingIndex=index;
+	            conf.nowPlayingIndex=index;
 			} catch (IllegalArgumentException e) {
 				// 
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (SecurityException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (IllegalStateException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;
+				return "false";
 			}
-        	return true;
+        	return "true";
+        }
+        
+        @JavascriptInterface
+        public String test()
+        {
+        	return "true";
         }
         
         @JavascriptInterface
@@ -260,75 +275,81 @@ public class _hmMusic extends Activity implements AnimationListener {
         }
         
         @JavascriptInterface
-        public int getTime()
+        public String getTime()
         {
-        	return mp.getCurrentPosition();
+        	return String.valueOf(mp.getCurrentPosition());
         }
         
         @JavascriptInterface
         public void addPlayList(String name,String uri)
         {
-        	nameList.add(name);
-        	uriList.add(uri);
-        	this.counts++;
+        	conf.nameList.add(name);
+        	conf.uriList.add(uri);
+        	conf.counts++;
         }
         
         @JavascriptInterface
-        public int getPlayingIndex()
+        public String getPlayingIndex()
         {
-	        return nowPlayingIndex;
+	        return String.valueOf(conf.nowPlayingIndex);
         }
         
         @JavascriptInterface
-        public int getApiLeavel()
+        public String getApiLevel()
         {
-        	return conf.apiVerson;
+        	return String.valueOf(conf.apiVerson);
         }
         
         @JavascriptInterface
-        public int getDownloadCounts()
+        public String getDownloadCounts()
         {
-        	return this.downloadCounts;
+        	return String.valueOf(conf.downloadCounts);
         }
         
         @JavascriptInterface
         public String getDownloadName(int index)
         {
-        	return this.downloadingNameList.get(index);
+        	return conf.downloadingNameList.get(index);
         }
         
         @JavascriptInterface
         public String getDownloadUri(int index)
         {
-        	return this.downLoadingUriList.get(index);
+        	return conf.downLoadingUriList.get(index);
         }
         
         @JavascriptInterface
-        public int getNowDownloading()
+        public String getNowDownloading()
         {
-        	return this.nowDownloading;
+        	return String.valueOf(conf.nowDownloading);
         }
         
         @JavascriptInterface
         public void addToDownloadList(String name,String uri)
         {
-        	if(!this.downloadingNameList.contains(name))
+        	if(!conf.downloadingNameList.contains(name))
         	{
-        		downloadingNameList.add(name);
-        		this.downLoadingUriList.add(uri);
-        		downloadCounts++;
-        		if(downloadCounts-nowDownloading>0)
+        		conf.downloadingNameList.add(name);
+        		conf.downLoadingUriList.add(uri);
+        		conf.downloadCounts++;
+        		if(conf.downloadCounts-conf.nowDownloading>=0)
         			new Thread(){  
 	                	public void run(){
-	                		while(downloadCounts-nowDownloading>0)
+	                		while(conf.downloadCounts-conf.nowDownloading>0)
 	                		{
-	                			String uri=downLoadingUriList.get(nowDownloading),name=downloadingNameList.get(nowDownloading);
+	                			String uri=conf.downLoadingUriList.get(conf.nowDownloading),name=conf.downloadingNameList.get(conf.nowDownloading);
 	                			if(uri!=null&&name!=null)	                			
-	                				downloadUriToFile(uri,name);
+	                				if(downloadUriToFile(uri,name))
+	                				{
+	                					conf.offlineNameList.add(name);
+	                					conf.offlineUriList.add(uri);
+	                					conf.offlineCount++;
+	                					conf.addCacheData(db, name, uri);
+	                				}
 	                			
-	                			nowDownloading++;
+	                			conf.nowDownloading++;
 	                		}
-	                		//Toast.makeText(getApplicationContext(), "全部下载任务完成",Toast.LENGTH_SHORT).show();
+	                		mHandler.obtainMessage(MSG_DOWNLOAD_FINISH).sendToTarget();
 	                	}  
 	            	}.start();  
 	            
@@ -340,21 +361,21 @@ public class _hmMusic extends Activity implements AnimationListener {
         }
         
         @JavascriptInterface
-        public int getPlayListCounts()
+        public String getPlayListCounts()
         {
-        	return this.counts;
+        	return String.valueOf(conf.counts);
         }
         
         @JavascriptInterface
         public String getPlayListName(int index)
         {
-        	return this.nameList.get(index);
+        	return conf.nameList.get(index);
         }
         
         @JavascriptInterface
         public String getPlayListUri(int index)
         {
-        	return this.nameList.get(index);
+        	return conf.nameList.get(index);
         }
         
         @JavascriptInterface
@@ -364,29 +385,94 @@ public class _hmMusic extends Activity implements AnimationListener {
         }
         
         @JavascriptInterface
-        public int setConfing(String name,String value)
+        public String setConfig(String name,String value)
         {
         	try {
 				conf.setting.put(name, value);
 				conf.saveConfigToDB(db);
 			} catch (Exception e) {
 				e.printStackTrace();
-				return 0;
+				return "false";
 			}
-        	return 1;
+        	return "true";
         }
         
         @JavascriptInterface
-        public void cancleDownloadFile(int index)
+        public String cancleDownloadFile(int index)
         {
-        	downloadingNameList.remove(index);
-        	downLoadingUriList.remove(index);
+        	try {
+				conf.downloadingNameList.remove(index);
+				conf.downLoadingUriList.remove(index);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return "false";
+			}
+        	return "true";
         }
         
         @JavascriptInterface
         public void showMenu()
         {
-        	openOptionsMenu();
+        	mHandler.obtainMessage(MSG_SHOW_MENU).sendToTarget();
+        }
+        
+        @JavascriptInterface
+        public void exitProgram()
+        {
+        	stopService(new Intent("org.hmoe.hm_music.SERVICE_DEMO"));
+			NotificationManager nm=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+			nm.cancelAll();
+			System.exit(0);
+        }
+        
+        @JavascriptInterface
+        public String getOfflineCount()
+        {
+        	return String.valueOf(conf.offlineCount);
+        }
+        
+        @JavascriptInterface
+        public String getOfflineName(int index)
+        {
+        	return conf.offlineNameList.get(index);
+        }
+        
+        @JavascriptInterface
+        public String getOfflineUri( int index)
+        {
+        	return conf.offlineUriList.get(index);
+        }
+        
+        @JavascriptInterface
+        public String delOffline(int index)
+        {
+        	
+        	try {
+				File file = new File(conf.offlineNameList.get(index));
+				if (file.exists()) {
+					file.delete();
+				}
+				conf.delCacheData(db, conf.offlineNameList.get(index));
+				conf.offlineUriList.remove(index);
+				conf.offlineNameList.remove(index);
+				conf.offlineCount--;
+			} catch (Exception e) {
+				try {
+					// TODO: handle exception
+					conf.delCacheData(db, conf.offlineNameList.get(index));
+					conf.offlineUriList.remove(index);
+					conf.offlineNameList.remove(index);
+					conf.offlineCount--;
+					return "true";
+				} catch (Exception e2) {
+					// TODO: handle exception
+					e.printStackTrace();
+					return "false";
+				}
+		
+			}
+			return "true";
         }
     }  
 
@@ -447,6 +533,15 @@ public class _hmMusic extends Activity implements AnimationListener {
 	        		onResume();
 	        		setContentView(R.layout.activity__hm_music);
 	        		initWebView();
+	        		if(conf.setting.get("screen_type").equals("pad"))
+	                {
+	                	conf.mainFrameUri=conf.HD_Web_Uri;
+	                }
+	                else
+	                {
+	                	conf.mainFrameUri=conf.Web_Uri;
+	                }
+	        		mWebView.loadUrl(conf.mainFrameUri);
 	        		if(mWebView!=null)mWebView.loadUrl("javascript:onResume()");
 	        	}
 			});
@@ -522,6 +617,7 @@ public class _hmMusic extends Activity implements AnimationListener {
         webSettings.setJavaScriptEnabled(true);    
         webSettings.setSupportZoom(false);  
         webSettings.setAppCacheEnabled(true);
+
         //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  
         //	webSettings.setWebContentsDebuggingEnabled(true);  
         //}  
@@ -647,7 +743,7 @@ public class _hmMusic extends Activity implements AnimationListener {
     	titleTagList.add("吃我大屌啦");
     }
     
-    private void downloadUriToFile(String urlDownload,String fileName)
+    private Boolean downloadUriToFile(String urlDownload,String fileName)
     {    	//要下载的文件路径
     	//urlDownload =  "http://192.168.3.39/text.txt";
     	//urlDownload = "http://www.baidu.com/img/baidu_sylogo1.gif";
@@ -698,8 +794,10 @@ public class _hmMusic extends Activity implements AnimationListener {
     	        
     	        Message msg=mHandler.obtainMessage(MSG_FAILURE);
     	        msg.obj=fileName;
-    	        msg.sendToTarget(); 
+    	        msg.sendToTarget();
+    	        return false;
     	}
+    	return true;
     }
     
     
