@@ -617,6 +617,11 @@ public class _hmMusic extends Activity implements AnimationListener {
         webSettings.setJavaScriptEnabled(true);    
         webSettings.setSupportZoom(false);  
         webSettings.setAppCacheEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAppCachePath(conf.setting.get("cacheLocation"));
+        //webSettings.setCacheMode(webSettings.LOAD_CACHE_ELSE_NETWORK);
+        //这个在发行版里面或许是需要的
+        
 
         //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  
         //	webSettings.setWebContentsDebuggingEnabled(true);  

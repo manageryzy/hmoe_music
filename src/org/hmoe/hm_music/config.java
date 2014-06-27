@@ -36,7 +36,7 @@ public final class config extends SQLiteOpenHelper{
 	public String mainFrameUri="";
 	public String updateURI="";
 	public String HD_Web_Uri="https://music2.hmacg.cn/android/hd/index.php";
-	public String Web_Uri="https://music2.hmacg.cn/android/normal/index.php";
+	public String Web_Uri="http://res1.hmacg.cn/hmoe_music_web/android/normal/index.html";
 	
 	//---------------------------------------------
 	//下面是实现过程
@@ -130,7 +130,7 @@ public final class config extends SQLiteOpenHelper{
         //---------------------------------------------
         //下面的是配置默认值
         setting.put("ifRunGPRS","false");
-        setting.put("screen_type", "pad");
+        setting.put("screen_type", "phone");
         setting.put("ifAutoDownload","false");
         setting.put("cacheLocation", Environment.getExternalStorageDirectory().getPath() +"/hmmusic/");
     }
