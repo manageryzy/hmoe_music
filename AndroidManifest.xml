@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.hmoe.hm_music"
-    android:versionCode="0"
-    android:versionName="0.4_2014.3.15" android:installLocation="auto">
+    android:versionCode="2"
+    android:versionName="0.1_2014.6.27" android:installLocation="auto">
 
     <uses-sdk
         android:minSdkVersion="9"
@@ -30,7 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="LocalService"  android:exported="false"> 
+        <service android:name=".playerService.LocalService"  android:exported="false"> 
         	<intent-filter> 
                 <action android:name="org.hmoe.hm_music.SERVICE_DEMO" /> 
                 <category android:name="android.intent.category.default" /> 

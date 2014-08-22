@@ -26,43 +26,93 @@ public final class R {
         public static final int main_margin=0x7f050002;
     }
     public static final class drawable {
-        public static final int hmoe_music_ui_mobile_welcome=0x7f020000;
-        public static final int hmoe_music_ui_mobile_welcome_bg=0x7f020001;
-        public static final int ic_launcher=0x7f020002;
+        public static final int bg_list=0x7f020000;
+        public static final int bg_listen=0x7f020001;
+        public static final int bg_offline=0x7f020002;
+        public static final int hmoe_logo=0x7f020003;
+        public static final int hmoe_music_ui_mobile_play_bg=0x7f020004;
+        public static final int hmoe_music_ui_mobile_play_btn_list=0x7f020005;
+        public static final int hmoe_music_ui_mobile_play_btnback=0x7f020006;
+        public static final int hmoe_music_ui_mobile_play_list_bg1=0x7f020007;
+        public static final int hmoe_music_ui_mobile_play_list_bg2=0x7f020008;
+        public static final int hmoe_music_ui_mobile_play_list_bg3=0x7f020009;
+        public static final int hmoe_music_ui_mobile_play_list_bg4=0x7f02000a;
+        public static final int hmoe_music_ui_mobile_play_list_header=0x7f02000b;
+        public static final int hmoe_music_ui_mobile_play_logo=0x7f02000c;
+        public static final int hmoe_music_ui_mobile_play_next=0x7f02000d;
+        public static final int hmoe_music_ui_mobile_play_pause=0x7f02000e;
+        public static final int hmoe_music_ui_mobile_play_play=0x7f02000f;
+        public static final int hmoe_music_ui_mobile_play_prev=0x7f020010;
+        public static final int hmoe_music_ui_mobile_play_progress=0x7f020011;
+        public static final int hmoe_music_ui_mobile_welcome=0x7f020012;
+        public static final int hmoe_music_ui_mobile_welcome_bg=0x7f020013;
+        public static final int ic_launcher=0x7f020014;
+        public static final int icon_list=0x7f020015;
+        public static final int icon_listen=0x7f020016;
+        public static final int icon_offline=0x7f020017;
+        public static final int test=0x7f020018;
+        public static final int title_bar_bg=0x7f020019;
     }
     public static final class id {
-        public static final int DownloadLocation=0x7f090005;
-        public static final int action_settings=0x7f09000a;
-        public static final int button1=0x7f090006;
-        public static final int button2=0x7f090007;
-        public static final int ifAutoDownload=0x7f090004;
-        public static final int ifHD=0x7f090003;
-        public static final int ifUseGPRS=0x7f090002;
-        public static final int imageView1=0x7f090008;
-        public static final int item1=0x7f09000b;
-        public static final int textView1=0x7f090001;
-        public static final int webView1=0x7f090000;
-        public static final int welcome_image_view=0x7f090009;
+        public static final int DownloadLocation=0x7f06001a;
+        public static final int FrameLayout1=0x7f060001;
+        public static final int LyricView1=0x7f060011;
+        public static final int MainListView=0x7f06000a;
+        public static final int PlayListView=0x7f060016;
+        public static final int TableRow01=0x7f060010;
+        public static final int action_settings=0x7f06001e;
+        public static final int button1=0x7f06001b;
+        public static final int button2=0x7f06001c;
+        public static final int copyright_textview=0x7f060006;
+        public static final int ifAutoDownload=0x7f060019;
+        public static final int ifHD=0x7f060018;
+        public static final int ifUseGPRS=0x7f060017;
+        public static final int imageView1=0x7f06000b;
+        public static final int imageView2=0x7f06000f;
+        public static final int imageView3=0x7f060015;
+        public static final int imageView4=0x7f060014;
+        public static final int imageView5=0x7f060013;
+        public static final int item1=0x7f06001f;
+        public static final int line1=0x7f06000e;
+        public static final int main_logo=0x7f060009;
+        public static final int play_btn_back=0x7f060002;
+        public static final int play_btn_list=0x7f06000d;
+        public static final int play_container=0x7f060004;
+        public static final int play_down_layout=0x7f060000;
+        public static final int play_header_layout=0x7f060008;
+        public static final int play_up_layout=0x7f06000c;
+        public static final int seekBar1=0x7f060012;
+        public static final int textView1=0x7f060003;
+        public static final int version_textview=0x7f060007;
+        public static final int viewpager=0x7f060005;
+        public static final int welcome_image_view=0x7f06001d;
     }
     public static final class layout {
-        public static final int activity__hm_music=0x7f030000;
-        public static final int setting=0x7f030001;
-        public static final int welcome=0x7f030002;
+        public static final int list_item_layout=0x7f030000;
+        public static final int main_frame=0x7f030001;
+        public static final int main_list_layout=0x7f030002;
+        public static final int play_control_layout=0x7f030003;
+        public static final int play_list_layout=0x7f030004;
+        public static final int setting=0x7f030005;
+        public static final int welcome=0x7f030006;
     }
     public static final class menu {
-        public static final int _hm_music=0x7f080000;
+        public static final int _hm_music=0x7f090000;
     }
     public static final class string {
-        public static final int action_settings=0x7f060001;
-        public static final int app_name=0x7f060000;
-        public static final int autoDoawnloadSong=0x7f060008;
-        public static final int downloadLocation=0x7f060009;
-        public static final int hello_world=0x7f060002;
-        public static final int ifHD=0x7f060007;
-        public static final int setting=0x7f060004;
-        public static final int setting_cancle=0x7f060006;
-        public static final int setting_ok=0x7f060005;
-        public static final int use_mobile_net=0x7f060003;
+        public static final int ListItemColor=0x7f07000a;
+        public static final int action_settings=0x7f070001;
+        public static final int app_name=0x7f070000;
+        public static final int autoDoawnloadSong=0x7f070008;
+        public static final int copyright=0x7f07000c;
+        public static final int downloadLocation=0x7f070009;
+        public static final int hello_world=0x7f070002;
+        public static final int ifHD=0x7f070007;
+        public static final int setting=0x7f070004;
+        public static final int setting_cancle=0x7f070006;
+        public static final int setting_ok=0x7f070005;
+        public static final int use_mobile_net=0x7f070003;
+        public static final int version=0x7f07000b;
     }
     public static final class style {
         /** 
@@ -86,10 +136,10 @@ public final class R {
     
  API 14 theme customizations can go here. 
          */
-        public static final int AppBaseTheme=0x7f070000;
+        public static final int AppBaseTheme=0x7f080000;
         /**  Application theme. 
  All customizations that are NOT specific to a particular API-level can go here. 
          */
-        public static final int AppTheme=0x7f070001;
+        public static final int AppTheme=0x7f080001;
     }
 }

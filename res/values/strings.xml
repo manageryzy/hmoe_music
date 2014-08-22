@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">hm_music</string>
+    <string name="app_name">h萌在线音乐</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="use_mobile_net">使用移动网络？（交了450，移动也保不了你</string>
@@ -11,5 +11,8 @@
     <string name="ifHD">强制横屏？（先这样用吧</string>
     <string name="autoDoawnloadSong">自动离线缓存歌曲</string>
     <string name="downloadLocation">缓存到内部存储</string>
+    <string name="ListItemColor">#FFFFFFFF</string>
+    <string name="version">&quot;Ver 2.0.1 Alpha&quot;</string>
+    <string name="copyright">Copyright (C) 2013-2014 H萌</string>
 
 </resources>

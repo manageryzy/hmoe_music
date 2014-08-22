@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="ContentDescription">
+        <ignore path="res/layout/play_control_layout.xml" />
+    </issue>
+    <issue id="InflateParams">
+        <ignore path="src/org/hmoe/hm_music/_hmMusic.java" />
+    </issue>
+</lint>

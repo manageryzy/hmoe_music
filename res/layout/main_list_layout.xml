@@ -1,0 +1,39 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/play_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/main_margin"
+    android:gravity="top"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/main_margin"
+    android:paddingLeft="@dimen/main_margin"
+    android:paddingRight="@dimen/main_margin"
+    android:paddingTop="@dimen/main_margin"
+    tools:context="._hmMusic" >
+
+    <RelativeLayout
+        android:id="@+id/play_header_layout"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="right"
+        android:background="@drawable/hmoe_music_ui_mobile_play_list_header"
+        android:scrollbars="none" >
+
+        <ImageView
+            android:id="@+id/main_logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/hmoe_logo" />
+
+    </RelativeLayout>
+
+    <ListView
+        android:id="@+id/MainListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </ListView>
+
+</LinearLayout>

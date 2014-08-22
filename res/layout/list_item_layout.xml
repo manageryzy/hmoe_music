@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/FrameLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageView
+        android:id="@+id/play_btn_back"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="fill"
+        android:scaleType="fitXY"
+        android:src="@drawable/hmoe_music_ui_mobile_welcome" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/app_name"
+        android:textColor="#FFFFFF"
+        android:textSize="@android:dimen/app_icon_size"
+        android:textStyle="bold"
+        android:typeface="serif" />
+
+</FrameLayout>

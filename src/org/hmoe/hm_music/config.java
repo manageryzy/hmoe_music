@@ -1,11 +1,16 @@
-package org.hmoe.hm_music;
+﻿package org.hmoe.hm_music;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hmoe.hm_music.playerService.PlayList;
+
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -14,37 +19,48 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 
 public final class config extends SQLiteOpenHelper{
-	private static final String DB_NAME = "mydata.db"; //���ݿ�����
-    private static final int version = 1; //���ݿ�汾
+	private static final String DB_NAME = "mydata.db"; //数据库名称
+    private static final int version = 1; //数据库版本
+    private Context theContext;
+    public static config conf;
     
-    public List<String>nameList;
-    public List<String>uriList;
-    public int nowPlayingIndex=0;
-    public int counts=0;
+    public PlayList OriPlayList;//hazx的歌曲列表
+    public PlayList UserPlayList;//用户自己的歌曲列表
+    public PlayList RandPlayList;//随机播放的时候生成的随机播放列表
+    public PlayList DownloadList;//下载列表（单线程，不写成多线程的主要还是懒
     
-    public List<String>downloadingNameList;
-    public List<String>downLoadingUriList;
-    public int downloadCounts=0;
-    public int nowDownloading;
+    public static String MusicResURI = "http://music.hmacg.net/gsc.php?mod=music&file=";
+    public static String LyricResURI = "http://music.hmacg.net/gsc.php?mod=lrc&file=";
+    public static String BGPicResURI = "http://music.hmacg.net/gsc.php?mod=gbg&file=";
+    public static String AblumResURI = "http://music.hmacg.net/gsc.php?mod=bk&file=";
     
-    public List<String>offlineNameList;
-    public List<String>offlineUriList;
-    public int offlineCount=0;
+    
+    //以下代码全部报废
+  public List<String>nameList;
+  public List<String>uriList;
+  public int nowPlayingIndex=0;
+  public int counts=0;
+  public List<String>downloadingNameList;
+  public List<String>downLoadingUriList;
+  public int downloadCounts=0;
+  public int nowDownloading;
+  public List<String>offlineNameList;
+  public List<String>offlineUriList;
+  public int offlineCount=0;
    
     public Map<String,String> setting = new HashMap<String,String>();
 	public int apiVerson = 2;
 	public String mainFrameUri="";
 	public String updateURI="";
-	public String HD_Web_Uri="https://music2.hmacg.cn/android/hd/index.php";
 	public String Web_Uri="http://res1.hmacg.cn/hmoe_music_web/android/normal/index.html";
 	
 	//---------------------------------------------
-	//������ʵ�ֹ���
+	//下面是实现过程
 	public boolean loadConfigFromDB(SQLiteDatabase db)
 	{
 		try {
-			Cursor c = db.query("config", null, null, null, null, null, null);//��ѯ������α�
-			if (c.moveToFirst()) {//�ж��α��Ƿ�Ϊ��
+			Cursor c = db.query("config", null, null, null, null, null, null);//查询并获得游标
+			if (c.moveToFirst()) {//判断游标是否为空
 				while(!c.isAfterLast())
 				{
 					String theName = c.getString(c.getColumnIndex("name"));
@@ -83,8 +99,12 @@ public final class config extends SQLiteOpenHelper{
 	{
 		
 		try {
-			String sql = "insert or replace into cache(name,value) values ('"+name + "','" + Value+"')";
-			db.execSQL(sql);
+//			String sql = "insert or replace into cache(name,value) values ('"+name + "','" + Value+"')";
+			ContentValues values = new ContentValues();
+			values.put("name", name);
+			values.put("value", Value);
+			db.insert("cache",null, values);
+//			db.execSQL(sql);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
@@ -104,31 +124,35 @@ public final class config extends SQLiteOpenHelper{
 		return true;
 	}
 	
-	public Boolean getCacheData(SQLiteDatabase db,List<String> offLineName,List<String>offLineUrl)
+	/**
+	 * 读取数据从缓存里面
+	 * @param db 数据库连接
+	 * @param offLineName 项目名称
+	 * @return 如果成功返回包含结果的string，否则返回null
+	 */
+	public String getCacheData(SQLiteDatabase db,String offLineName)
 	{
 		try {
-			Cursor c = db.query("cache", null, null, null, null, null, null);//��ѯ������α�
-			if (c.moveToFirst()) {//�ж��α��Ƿ�Ϊ��
+			Cursor c = db.query("cache", null, " name = ?",new String[]{offLineName}, null, null, null);//查询并获得游标
+			if (c.moveToFirst()) {//判断游标是否为空
 				while(!c.isAfterLast())
 				{
-					String theName = c.getString(c.getColumnIndex("name"));
 					String theValue = c.getString(c.getColumnIndex("value"));
-					offLineName.add(theName);
-					offLineUrl.add(theValue);
-					c.moveToNext();
+					return theValue;
 				}
 			}
+			return null;
 		} catch (Exception e) {
 			e.getStackTrace();
-			return false;
+			return null;
 		}
-		return true;
 	}
 	
 	public config(Context context) {
-        super(context, DB_NAME, null, version);
+		super(context, DB_NAME, null, version);
+		theContext=context;
         //---------------------------------------------
-        //�����������Ĭ��ֵ
+        //下面的是配置默认值
         setting.put("ifRunGPRS","false");
         setting.put("screen_type", "phone");
         setting.put("ifAutoDownload","false");
@@ -138,10 +162,14 @@ public final class config extends SQLiteOpenHelper{
     @Override
     public void onCreate(SQLiteDatabase db) {
         try{
+        	//创建数据库
         	String sql = "create table config(name varchar(255) PRIMARY KEY not null , value varchar(255) not null );";          
         	db.execSQL(sql);
-        	sql = "create table cache(name varchar(255) PRIMARY KEY not null , value varchar(255) not null );";          
+        	sql = "create table cache(name text PRIMARY KEY not null , value text not null );";          
         	db.execSQL(sql);
+        	//添加默认数据
+        	String MusicJson=this.getFromAssets("hmmusic.json");
+        	this.addCacheData(db, "OriMusicJson", MusicJson);
         }
         catch(Exception e)
         {
@@ -153,5 +181,21 @@ public final class config extends SQLiteOpenHelper{
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
  
     }
+    
+    public String getFromAssets(String fileName)
+    { 
+        try { 
+             InputStreamReader inputReader = new InputStreamReader( theContext.getResources().getAssets().open(fileName) ); 
+            BufferedReader bufReader = new BufferedReader(inputReader);
+            String line="";
+            String Result="";
+            while((line = bufReader.readLine()) != null)
+                Result += line;
+            return Result;
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+            return "";
+        }
+    } 
 	
 }

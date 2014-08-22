@@ -1,24 +1,15 @@
-package org.hmoe.hm_music;
+ï»¿package org.hmoe.hm_music;
 
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
-import org.hmoe.hm_music.R;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.os.StrictMode;
+import org.hmoe.hm_music.playerService.LocalService;
+import org.hmoe.hm_music.playerService.PlayList;
+import org.hmoe.hm_music.view.PlayPageView;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,115 +17,143 @@ import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.StrictMode;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Animation.AnimationListener;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.http.SslError;
-import android.webkit.SslErrorHandler;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 public class _hmMusic extends Activity implements AnimationListener {
 	
-	private static final int MSG_SUCCESS = 0;  
-    private static final int MSG_FAILURE = 1; 
-    private static final int MSG_SHOW_MENU=2;
-    private static final int MSG_DOWNLOAD_FINISH=3;
+	public static final int MSG_SUCCESS = 0;  
+	public static final int MSG_FAILURE = 1; 
+	public static final int MSG_SHOW_MENU=2;
+	public static final int MSG_DOWNLOAD_FINISH=3;
+    
+    private LocalService mBoundService; 
+    private List<String> titleList;//viewpagerçš„æ ‡é¢˜  
+    ViewPager viewPager;
+    PagerAdapter pagerAdapter;
+    
+    private View view1, view3;//éœ€è¦æ»‘åŠ¨çš„é¡µå¡ 
+    private PlayPageView view2;
+    private List<View> viewList;//æŠŠéœ€è¦æ»‘åŠ¨çš„é¡µå¡æ·»åŠ åˆ°è¿™ä¸ªlistä¸­  
 	
-	private List<String> titleTagList = new ArrayList<String>();
-	private WebView mWebView;  
-	private MediaPlayer mp= new MediaPlayer();
-	private ImageView  imageView = null;   
+    private List<String> titleTagList = new ArrayList<String>();//æ’­æ”¾å™¨å–èŒçš„è¯
+    ListView listView ;
+    private ImageView  imageView = null;   
 	private Animation alphaAnimation = null;   
 	private Button btnYes=null;
 	private Button btnNo=null;
-	public static config conf;
-	private static SQLiteDatabase db = null;
+	public static SQLiteDatabase db = null;
 	
 	
-	private Handler mHandler = new Handler(){  
+	private ServiceConnection mConnection = new ServiceConnection() { 
+	        public void onServiceConnected(ComponentName className, IBinder service) { 
+	                // This is called when the connection with the service has been 
+	                // established, giving us the service object we can use to 
+	                // interact with the service.    Because we have bound to a explicit 
+	                // service that we know is running in our own process, we can 
+	                // cast its IBinder to a concrete class and directly access it. 
+	                mBoundService = ((LocalService.LocalBinder)service).getService();  
+	                Log.i("hmMusic", "service connected");
+	        } 
+	
+	        public void onServiceDisconnected(ComponentName className) { 
+	                // This is called when the connection with the service has been 
+	                // unexpectedly disconnected -- that is, its process crashed. 
+	                // Because it is running in our same process, we should never 
+	                // see this happen. 
+	                mBoundService = null; 
+	                Log.i("hmMusic", "Service Disconnected");
+	        } 
+	};
+	
+	@SuppressLint("HandlerLeak")
+	public Handler mHandler = new Handler(){  
         @Override  
         public void handleMessage(Message msg) {  
             switch (msg.what) {  
             case MSG_SUCCESS:  
                 
-                Toast.makeText(getApplication(), "ÏÂÔØ¸èÇú³É¹¦"+(String)msg.obj, Toast.LENGTH_LONG).show();  
-                mWebView.loadUrl("javascripr:onDownloadSucceed()");
+                Toast.makeText(getApplication(), "ä¸‹è½½æ­Œæ›²æˆåŠŸ"+(String)msg.obj, Toast.LENGTH_LONG).show();  
                 break;   
   
             case MSG_FAILURE:    
-            	mWebView.loadUrl("javascript:onDownloadError("+(String)msg.obj+")");
-                Toast.makeText(getApplication(), "ÏÂÔØ¸èÇúÊ§°Ü"+(String)msg.obj, Toast.LENGTH_LONG).show(); 
+                Toast.makeText(getApplication(), "ä¸‹è½½æ­Œæ›²å¤±è´¥"+(String)msg.obj, Toast.LENGTH_LONG).show(); 
                 break;  
             case MSG_SHOW_MENU:
             	openOptionsMenu();
             	break;
             case MSG_DOWNLOAD_FINISH:
-            	Toast.makeText(getApplicationContext(), "È«²¿ÏÂÔØÈÎÎñÍê³É",Toast.LENGTH_SHORT).show();
-            	mWebView.loadUrl("javascripr:onDownloadAllFinish()");
+            	Toast.makeText(getApplicationContext(), "å…¨éƒ¨ä¸‹è½½ä»»åŠ¡å®Œæˆ",Toast.LENGTH_SHORT).show();
             	break;
             }  
             super.handleMessage(msg);  
-        }  
-          
+        }         
     };  
     
     private void init()
     {
-    	conf =new config(this);//Õâ¶Î´úÂë·Åµ½ActivityÀàÖĞ²ÅÓÃthis
+    	config.conf =new config(this);//è¿™æ®µä»£ç æ”¾åˆ°Activityç±»ä¸­æ‰ç”¨this
 		
-		if(db==null)db = conf.getReadableDatabase();
+		if(db==null)db = config.conf.getReadableDatabase();
 		
-        if(!conf.loadConfigFromDB(db))
+        if(!config.conf.loadConfigFromDB(db))
         {
-        	Toast.makeText(getApplicationContext(), "Êı¾İ¿â¶ÁÈ¡Òì³£",Toast.LENGTH_SHORT).show();;
+        	Toast.makeText(getApplicationContext(), "æ•°æ®åº“è¯»å–å¼‚å¸¸",Toast.LENGTH_SHORT).show();;
         }
-        if(!conf.saveConfigToDB(db))
+        if(!config.conf.saveConfigToDB(db))
         {
-        	Toast.makeText(getApplicationContext(), "Êı¾İ¿âĞ´ÈëÒì³£",Toast.LENGTH_SHORT).show();;
+        	Toast.makeText(getApplicationContext(), "æ•°æ®åº“å†™å…¥å¼‚å¸¸",Toast.LENGTH_SHORT).show();;
         }
         
-        if(conf.setting.get("screen_type").equals("pad"))
-        {
-        	conf.mainFrameUri=conf.HD_Web_Uri;
-        }
-        else
-        {
-        	conf.mainFrameUri=conf.Web_Uri;
-        }
+        String OriMusicJson = config.conf.getCacheData(db, "OriMusicJson");
         
-        conf.nameList=new LinkedList<String>();
-		conf.uriList=new LinkedList<String>();
-		conf.downloadingNameList=new LinkedList<String>();
-		conf.downLoadingUriList=new LinkedList<String>();
-		conf.offlineNameList=new LinkedList<String>();
-		conf.offlineUriList=new LinkedList<String>();
-		if(!conf.getCacheData(db, conf.offlineNameList, conf.offlineUriList))
-			Toast.makeText(getApplicationContext(), "»ñÈ¡»º´æÊı¾İ´íÎó",Toast.LENGTH_SHORT).show();
-		conf.offlineCount=conf.offlineNameList.size();
+        config.conf.OriPlayList=new PlayList();
+        config.conf.OriPlayList.InitListByJSON(OriMusicJson);
+//      config.conf.nameList=new LinkedList<String>();
+//      config.conf.uriList=new LinkedList<String>();
+//      config.conf.downloadingNameList=new LinkedList<String>();
+//      config.conf.downLoadingUriList=new LinkedList<String>();
+//      config.conf.offlineNameList=new LinkedList<String>();
+//      config.conf.offlineUriList=new LinkedList<String>();
+
+//		if(!config.conf.getCacheData(db, config.conf.offlineNameList, config.conf.offlineUriList))
+//			Toast.makeText(getApplicationContext(), "è·å–ç¼“å­˜æ•°æ®é”™è¯¯",Toast.LENGTH_SHORT).show();
+//		config.conf.offlineCount=config.conf.offlineNameList.size();
     }
 
-	@SuppressLint({ "SetJavaScriptEnabled", "JavascriptInterface" })
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -142,339 +161,37 @@ public class _hmMusic extends Activity implements AnimationListener {
 		
 		setContentView(R.layout.welcome);   
 		
-		if(conf==null)init();
+		if(config.conf==null)init();
         
         addTitleTagList();
         
         imageView = (ImageView)findViewById(R.id.welcome_image_view);   
         alphaAnimation = AnimationUtils.loadAnimation(this, R.anim.welcome_alpha);   
-        alphaAnimation.setFillEnabled(true); //Æô¶¯Fill±£³Ö   
-        alphaAnimation.setFillAfter(true);  //ÉèÖÃ¶¯»­µÄ×îºóÒ»Ö¡ÊÇ±£³ÖÔÚViewÉÏÃæ   
+        alphaAnimation.setFillEnabled(true); //å¯åŠ¨Fillä¿æŒ   
+        alphaAnimation.setFillAfter(true);  //è®¾ç½®åŠ¨ç”»çš„æœ€åä¸€å¸§æ˜¯ä¿æŒåœ¨Viewä¸Šé¢   
         imageView.setAnimation(alphaAnimation);   
-        alphaAnimation.setAnimationListener(this);  //Îª¶¯»­ÉèÖÃ¼àÌı   
+        alphaAnimation.setAnimationListener(this);  //ä¸ºåŠ¨ç”»è®¾ç½®ç›‘å¬   
+        
+        startService(new Intent("org.hmoe.hm_music.SERVICE_DEMO")); 
 		
+		NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);               
+		Notification n = new Notification(R.drawable.ic_launcher, "hèŒåœ¨çº¿éŸ³ä¹!", System.currentTimeMillis());             
+		n.flags = Notification.FLAG_NO_CLEAR;                
+		Intent i = new Intent(getApplicationContext(), _hmMusic.class);
+		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);           
+		PendingIntent contentIntent  = PendingIntent.getActivity(this, 0, i, 0);  
+		Random random = new Random();             
+		n.setLatestEventInfo(
+				getApplicationContext(),
+		        "hèŒåœ¨çº¿éŸ³ä¹", 
+		        titleTagList.get(random.nextInt(titleTagList.size())), 
+		        contentIntent);
+		nm.notify(R.string.app_name, n);
+        
+		 // supporting component replacement by other applications). 
+        bindService(new Intent(this,LocalService.class), mConnection, Context.BIND_AUTO_CREATE); 
+        
 	}
-	
-	final class DemoJavaScriptInterface {  
-        
-        
-        
-		DemoJavaScriptInterface() {
-			
-		}  
-        
-        
-        @JavascriptInterface
-        public String setPlayerSongUri(String uri)
-        {
-        	try {
-        		mp.stop();
-        		mp.reset();
-				mp.setDataSource(uri);
-				new Thread(){  
-	                public void run(){  
-	                	try {
-							mp.prepare();
-						} catch (IllegalStateException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-	    				mp.start();
-	                }  
-	            }.start();  
-				
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-				return "false";
-			} catch (SecurityException e) {
-				e.printStackTrace();
-				return "false";
-			} catch (IllegalStateException e) {
-				e.printStackTrace();
-				return "false";
-			} catch (IOException e) {
-				e.printStackTrace();
-				return "false";
-			}
-        	return "true";
-        }
-        
-        @JavascriptInterface
-        public String setPlayerSongIndex(int index)
-        {
-        	
-        	try {
-        		mp.stop();
-        		mp.reset();
-				mp.setDataSource(conf.uriList.get(index));
-				if(conf.setting.get("ifAutoDownload").equals("true"))
-				{
-					addToDownloadList(conf.nameList.get(index),conf.uriList.get(index));
-				}
-				new Thread(){  
-	                public void run(){  
-	                	try {
-							mp.prepare();
-						} catch (IllegalStateException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							// 
-							e.printStackTrace();
-						}
-	    				mp.start();
-	                }  
-	            }.start();  
-	            
-	            conf.nowPlayingIndex=index;
-			} catch (IllegalArgumentException e) {
-				// 
-				e.printStackTrace();
-				return "false";
-			} catch (SecurityException e) {
-				e.printStackTrace();
-				return "false";
-			} catch (IllegalStateException e) {
-				e.printStackTrace();
-				return "false";
-			} catch (IOException e) {
-				e.printStackTrace();
-				return "false";
-			}
-        	return "true";
-        }
-        
-        @JavascriptInterface
-        public String test()
-        {
-        	return "true";
-        }
-        
-        @JavascriptInterface
-        public void play()
-        {
-        	mp.start();
-        }
-        
-        @JavascriptInterface
-        public void pause()
-        {
-        	mp.pause();
-        }
-        
-        @JavascriptInterface
-        public void stop()
-        {
-        	mp.stop();
-        }
-        
-        @JavascriptInterface
-        public void seekTo(int time)
-        {
-        	mp.seekTo(time);
-        }
-        
-        @JavascriptInterface
-        public String getTime()
-        {
-        	return String.valueOf(mp.getCurrentPosition());
-        }
-        
-        @JavascriptInterface
-        public void addPlayList(String name,String uri)
-        {
-        	conf.nameList.add(name);
-        	conf.uriList.add(uri);
-        	conf.counts++;
-        }
-        
-        @JavascriptInterface
-        public String getPlayingIndex()
-        {
-	        return String.valueOf(conf.nowPlayingIndex);
-        }
-        
-        @JavascriptInterface
-        public String getApiLevel()
-        {
-        	return String.valueOf(conf.apiVerson);
-        }
-        
-        @JavascriptInterface
-        public String getDownloadCounts()
-        {
-        	return String.valueOf(conf.downloadCounts);
-        }
-        
-        @JavascriptInterface
-        public String getDownloadName(int index)
-        {
-        	return conf.downloadingNameList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String getDownloadUri(int index)
-        {
-        	return conf.downLoadingUriList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String getNowDownloading()
-        {
-        	return String.valueOf(conf.nowDownloading);
-        }
-        
-        @JavascriptInterface
-        public void addToDownloadList(String name,String uri)
-        {
-        	if(!conf.downloadingNameList.contains(name))
-        	{
-        		conf.downloadingNameList.add(name);
-        		conf.downLoadingUriList.add(uri);
-        		conf.downloadCounts++;
-        		if(conf.downloadCounts-conf.nowDownloading>=0)
-        			new Thread(){  
-	                	public void run(){
-	                		while(conf.downloadCounts-conf.nowDownloading>0)
-	                		{
-	                			String uri=conf.downLoadingUriList.get(conf.nowDownloading),name=conf.downloadingNameList.get(conf.nowDownloading);
-	                			if(uri!=null&&name!=null)	                			
-	                				if(downloadUriToFile(uri,name))
-	                				{
-	                					conf.offlineNameList.add(name);
-	                					conf.offlineUriList.add(uri);
-	                					conf.offlineCount++;
-	                					conf.addCacheData(db, name, uri);
-	                				}
-	                			
-	                			conf.nowDownloading++;
-	                		}
-	                		mHandler.obtainMessage(MSG_DOWNLOAD_FINISH).sendToTarget();
-	                	}  
-	            	}.start();  
-	            
-        	}
-        	else
-        	{
-        		Toast.makeText(getApplicationContext(), "ÒÑ¾­ÔÚÏÂÔØÁĞ±íÖĞ",Toast.LENGTH_SHORT).show();
-        	}
-        }
-        
-        @JavascriptInterface
-        public String getPlayListCounts()
-        {
-        	return String.valueOf(conf.counts);
-        }
-        
-        @JavascriptInterface
-        public String getPlayListName(int index)
-        {
-        	return conf.nameList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String getPlayListUri(int index)
-        {
-        	return conf.nameList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String getConfig(String name)
-        {
-        	return conf.setting.get(name);
-        }
-        
-        @JavascriptInterface
-        public String setConfig(String name,String value)
-        {
-        	try {
-				conf.setting.put(name, value);
-				conf.saveConfigToDB(db);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return "false";
-			}
-        	return "true";
-        }
-        
-        @JavascriptInterface
-        public String cancleDownloadFile(int index)
-        {
-        	try {
-				conf.downloadingNameList.remove(index);
-				conf.downLoadingUriList.remove(index);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return "false";
-			}
-        	return "true";
-        }
-        
-        @JavascriptInterface
-        public void showMenu()
-        {
-        	mHandler.obtainMessage(MSG_SHOW_MENU).sendToTarget();
-        }
-        
-        @JavascriptInterface
-        public void exitProgram()
-        {
-        	stopService(new Intent("org.hmoe.hm_music.SERVICE_DEMO"));
-			NotificationManager nm=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-			nm.cancelAll();
-			System.exit(0);
-        }
-        
-        @JavascriptInterface
-        public String getOfflineCount()
-        {
-        	return String.valueOf(conf.offlineCount);
-        }
-        
-        @JavascriptInterface
-        public String getOfflineName(int index)
-        {
-        	return conf.offlineNameList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String getOfflineUri( int index)
-        {
-        	return conf.offlineUriList.get(index);
-        }
-        
-        @JavascriptInterface
-        public String delOffline(int index)
-        {
-        	
-        	try {
-				File file = new File(conf.offlineNameList.get(index));
-				if (file.exists()) {
-					file.delete();
-				}
-				conf.delCacheData(db, conf.offlineNameList.get(index));
-				conf.offlineUriList.remove(index);
-				conf.offlineNameList.remove(index);
-				conf.offlineCount--;
-			} catch (Exception e) {
-				try {
-					// TODO: handle exception
-					conf.delCacheData(db, conf.offlineNameList.get(index));
-					conf.offlineUriList.remove(index);
-					conf.offlineNameList.remove(index);
-					conf.offlineCount--;
-					return "true";
-				} catch (Exception e2) {
-					// TODO: handle exception
-					e.printStackTrace();
-					return "false";
-				}
-		
-			}
-			return "true";
-        }
-    }  
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -486,24 +203,24 @@ public class _hmMusic extends Activity implements AnimationListener {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		super.onOptionsItemSelected(item);
-		switch(item.getItemId())//µÃµ½±»µã»÷µÄitemµÄitemId
+		switch(item.getItemId())//å¾—åˆ°è¢«ç‚¹å‡»çš„itemçš„itemId
 		{
-		case R.id.action_settings: //¶ÔÓ¦µÄID¾ÍÊÇÔÚadd·½·¨ÖĞËùÉè¶¨µÄId
+		case R.id.action_settings: //å¯¹åº”çš„IDå°±æ˜¯åœ¨addæ–¹æ³•ä¸­æ‰€è®¾å®šçš„Id
 			setContentView(R.layout.setting);
 			CheckBox boolSetting=(CheckBox)findViewById(R.id.ifUseGPRS);
-			if(conf.setting.get("ifRunGPRS").equals("true"))
+			if(config.conf.setting.get("ifRunGPRS").equals("true"))
 				boolSetting.setChecked(true);
 			
 			boolSetting=(CheckBox)findViewById(R.id.ifHD);
-			if(conf.setting.get("screen_type").equals("pad"))
+			if(config.conf.setting.get("screen_type").equals("pad"))
 				boolSetting.setChecked(true);
 			
 			boolSetting=(CheckBox)findViewById(R.id.ifAutoDownload);
-			if(conf.setting.get("ifAutoDownload").equals("true"))
+			if(config.conf.setting.get("ifAutoDownload").equals("true"))
 				boolSetting.setChecked(true);
 			
 			boolSetting=(CheckBox)findViewById(R.id.DownloadLocation);
-			if(!conf.setting.get("cacheLocation").equals( Environment.getExternalStorageDirectory().getPath() +"/hmmusic/"))
+			if(!config.conf.setting.get("cacheLocation").equals( Environment.getExternalStorageDirectory().getPath() +"/hmmusic/"))
 				boolSetting.setChecked(true);
 			
 			btnYes=(Button)findViewById(R.id.button1);
@@ -513,45 +230,33 @@ public class _hmMusic extends Activity implements AnimationListener {
 	        	public void onClick(View v)
 	        	{
 	        		CheckBox boolSetting=(CheckBox)findViewById(R.id.ifUseGPRS);
-	        		if(boolSetting.isChecked())conf.setting.put("ifRunGPRS","true");
-	        		else conf.setting.put("ifRunGPRS","false");
+	        		if(boolSetting.isChecked())config.conf.setting.put("ifRunGPRS","true");
+	        		else config.conf.setting.put("ifRunGPRS","false");
 	        		
 	        		boolSetting=(CheckBox)findViewById(R.id.ifHD);
-	        		if(boolSetting.isChecked())conf.setting.put("screen_type","pad");
-	        		else conf.setting.put("screen_type","phone");
+	        		if(boolSetting.isChecked())config.conf.setting.put("screen_type","pad");
+	        		else config.conf.setting.put("screen_type","phone");
 	        		
 	        		boolSetting=(CheckBox)findViewById(R.id.ifAutoDownload);
-	        		if(boolSetting.isChecked())conf.setting.put("ifAutoDownload","true");
-	        		else conf.setting.put("ifAutoDownload","false");
+	        		if(boolSetting.isChecked())config.conf.setting.put("ifAutoDownload","true");
+	        		else config.conf.setting.put("ifAutoDownload","false");
 	        		
 	        		boolSetting=(CheckBox)findViewById(R.id.DownloadLocation);
-	        		if(boolSetting.isChecked())conf.setting.put("cacheLocation",Environment.getExternalStorageDirectory().getPath() +"/hmmusic/");
-	        		else conf.setting.put("cacheLocation",Environment.getExternalStorageDirectory().getPath() +"/hmmusic/");
+	        		if(boolSetting.isChecked())config.conf.setting.put("cacheLocation",Environment.getExternalStorageDirectory().getPath() +"/hmmusic/");
+	        		else config.conf.setting.put("cacheLocation",Environment.getExternalStorageDirectory().getPath() +"/hmmusic/");
 	        		
-	        		conf.saveConfigToDB(db);
+	        		config.conf.saveConfigToDB(db);
 	        		
 	        		onResume();
-	        		setContentView(R.layout.activity__hm_music);
-	        		initWebView();
-	        		if(conf.setting.get("screen_type").equals("pad"))
-	                {
-	                	conf.mainFrameUri=conf.HD_Web_Uri;
-	                }
-	                else
-	                {
-	                	conf.mainFrameUri=conf.Web_Uri;
-	                }
-	        		mWebView.loadUrl(conf.mainFrameUri);
-	        		if(mWebView!=null)mWebView.loadUrl("javascript:onResume()");
+	        		setContentView(R.layout.main_list_layout);
+	        		
 	        	}
 			});
 	        btnNo.setOnClickListener(new OnClickListener(){
 	        	@Override
 	        	public void onClick(View v)
 	        	{
-	        		setContentView(R.layout.activity__hm_music);
-	        		initWebView();
-	        		if(mWebView!=null)mWebView.loadUrl("javascript:onResume()");
+	        		setContentView(R.layout.main_list_layout);
 	        	}
 			});
 			break;
@@ -569,9 +274,9 @@ public class _hmMusic extends Activity implements AnimationListener {
 	@Override
 	protected void onResume() {
 	 
-		if(conf.setting.get("screen_type").equals("pad"))
+		if(config.conf.setting.get("screen_type").equals("pad"))
 		{
-			/*** ÉèÖÃÎªºáÆÁ  */
+			/*** è®¾ç½®ä¸ºæ¨ªå±  */
 			if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
 			{
 					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -579,15 +284,13 @@ public class _hmMusic extends Activity implements AnimationListener {
 		}
 		else
 		{
-			/*** ÉèÖÃÎªÊúÆÁ  */
+			/*** è®¾ç½®ä¸ºç«–å±  */
 			if(getRequestedOrientation()!=ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 			{
 					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 			}
 		}
 	 
-	 if(this.mWebView!=null)
-		 this.mWebView.loadUrl("javascript:onResume()");
 	 super.onResume();
 	}
 	
@@ -595,55 +298,92 @@ public class _hmMusic extends Activity implements AnimationListener {
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		listView.getChildAt(0).setBackgroundResource(R.drawable.hmoe_music_ui_mobile_welcome);
 	    if (keyCode == KeyEvent.KEYCODE_BACK) {
-	        moveTaskToBack(true);//true¶ÔÈÎºÎActivity¶¼ÊÊÓÃ
+	        moveTaskToBack(true);//trueå¯¹ä»»ä½•Activityéƒ½é€‚ç”¨
 	        return true;
 	    }
 	    return super.onKeyDown(keyCode, event);
 	}
-	
-	
 	
 	@Override  
     public void onAnimationStart(Animation animation) {   
            
     }   
 	
-	@SuppressLint("SetJavaScriptEnabled")
-	public void initWebView()
-	{
-		mWebView = (WebView) findViewById(R.id.webView1);       
-        WebSettings webSettings = mWebView.getSettings();       
-        webSettings.setJavaScriptEnabled(true);    
-        webSettings.setSupportZoom(false);  
-        webSettings.setAppCacheEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAppCachePath(conf.setting.get("cacheLocation"));
-        //webSettings.setCacheMode(webSettings.LOAD_CACHE_ELSE_NETWORK);
-        //Õâ¸öÔÚ·¢ĞĞ°æÀïÃæ»òĞíÊÇĞèÒªµÄ
-        
 
-        //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {  
-        //	webSettings.setWebContentsDebuggingEnabled(true);  
-        //}  
-       // webSettings.setAppCacheMaxSize(999999999);
-        mWebView.addJavascriptInterface(new DemoJavaScriptInterface(),"android"); 
-        
-        WebViewClient  mWebviewclient = new WebViewClient(){  
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error){  
-                 handler.proceed();  
-            }  
-        };  
-        mWebView.setWebViewClient(mWebviewclient);  
-        mWebView.loadUrl(conf.mainFrameUri);
-	}
-	
-       
-    @SuppressWarnings("deprecation")
 	@Override  
     public void onAnimationEnd(Animation animation) {   
-        //¶¯»­½áÊøÊ±½áÊø»¶Ó­½çÃæ²¢×ªµ½Èí¼şµÄÖ÷½çÃæ   
-    	setContentView(R.layout.activity__hm_music);
+        //åŠ¨ç”»ç»“æŸæ—¶ç»“æŸæ¬¢è¿ç•Œé¢å¹¶è½¬åˆ°è½¯ä»¶çš„ä¸»ç•Œé¢   
+    	setContentView(R.layout.main_frame);
+    	
+    	
+    	viewPager = (ViewPager) findViewById(R.id.viewpager); 
+    	getLayoutInflater();
+		LayoutInflater lf = LayoutInflater.from(this);  
+        view1 = lf.inflate(R.layout.main_list_layout, null);  
+        view2 = (PlayPageView) lf.inflate(R.layout.play_control_layout, null);  
+        view3 = lf.inflate(R.layout.play_list_layout, null);  
+        
+
+        viewList = new ArrayList<View>();// å°†è¦åˆ†é¡µæ˜¾ç¤ºçš„Viewè£…å…¥æ•°ç»„ä¸­  
+        viewList.add(view1);  
+        viewList.add(view2);  
+        viewList.add(view3);  
+        
+        titleList = new ArrayList<String>();// æ¯ä¸ªé¡µé¢çš„Titleæ•°æ®  
+        titleList.add("wp");  
+        titleList.add("jy");  
+        titleList.add("jh");  
+        
+        pagerAdapter = new PagerAdapter() {  
+        	  
+            @Override  
+            public boolean isViewFromObject(View arg0, Object arg1) {  
+  
+                return arg0 == arg1;  
+            }  
+  
+            @Override  
+            public int getCount() {  
+  
+                return viewList.size();  
+            }  
+  
+            @Override  
+            public void destroyItem(ViewGroup container, int position,  
+                    Object object) {  
+                container.removeView(viewList.get(position));  
+  
+            }  
+  
+            @Override  
+            public int getItemPosition(Object object) {  
+  
+                return super.getItemPosition(object);  
+            }  
+  
+            @Override  
+            public CharSequence getPageTitle(int position) {  
+  
+                return titleList.get(position);  
+            }  
+  
+            @Override  
+            public Object instantiateItem(ViewGroup container, int position) {  
+                container.addView(viewList.get(position));  
+                return viewList.get(position);  
+            }  
+  
+        };  
+        viewPager.setAdapter(pagerAdapter);  
+        
+        //
+        listView=(ListView)view1.findViewById(R.id.MainListView);
+    	SimpleAdapter adapter = new SimpleAdapter(this, getData(), R.layout.list_item_layout,  
+                new String[]{"image","item"}, new int[]{R.id.play_btn_back,R.id.textView1});  
+        listView.setAdapter(adapter);  
+
 		
 		try{
 			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -655,17 +395,84 @@ public class _hmMusic extends Activity implements AnimationListener {
 		}
 		catch (Exception e)
 		{
+			e.getCause();
 			e.printStackTrace();
 		}
 		
+		CheckNetWork();
+        
+        mBoundService.RegMainActvity(this);
+//        mp.setOnCompletionListener(new OnCompletionListener(){
+//            @Override
+//            public void onCompletion(MediaPlayer mp) {
+//                
+//            }});
+    }   
+    
+       
+    @Override  
+    public void onAnimationRepeat(Animation animation) {   
+    	
+    }   
+    
+    
+    private void addTitleTagList()
+    {
+    	titleTagList.add("ä½ çœŸå½“è‡ªå·±æ˜¯å¤§å°å§å•Š");
+    	titleTagList.add("ä¹–ä¹–â™‚ç«™å¥½");
+    	titleTagList.add("ä¸äº¤450è¿˜æƒ³ç©æ¸¸æˆ");
+    	titleTagList.add("ä¸åšæ­»å°±ä¸ä¼šæ­»");
+    	titleTagList.add("äººä½œæ­»å°±ä¼šæ­»");
+    	titleTagList.add("è¿˜è®°å¾—1999å¹´çš„é‚£äº›äº‹æƒ…ä¹ˆ");
+    	titleTagList.add("èŒå°±æ˜¯æ­£ä¹‰");
+    	titleTagList.add("è´«ä¹³æ‰æ˜¯ç¨€ç¼ºçš„ä»·å€¼");
+    	titleTagList.add("å°å­¦ç”ŸçœŸæ˜¯å¤ªæ£’äº†");
+    	titleTagList.add("è¿™ä¹ˆå¯çˆ±çš„ä¸€å®šæ˜¯ç”·å­©å­");
+    	titleTagList.add("æœ‰æœ¬äº‹æ”¾å­¦åˆ«èµ°");
+    	titleTagList.add("åƒæˆ‘å¤§å±Œå•¦");
+    }
+    
+    
+    /** 
+     * @author chenzheng_java 
+     * @description å‡†å¤‡ä¸€äº›æµ‹è¯•æ•°æ® 
+     * @return ä¸€ä¸ªåŒ…å«äº†æ•°æ®ä¿¡æ¯çš„hashMapé›†åˆ 
+     */  
+    private ArrayList<HashMap<String, Object>> getData(){  
+        ArrayList<HashMap<String, Object>> arrayList = new ArrayList<HashMap<String,Object>>();  
+        for(int i=0;i<10;i++){  
+            HashMap<String, Object> tempHashMap = new HashMap<String, Object>();  
+            tempHashMap.put("image", R.drawable.ic_launcher);  
+            tempHashMap.put("item", "ç”¨æˆ·"+i);  
+            arrayList.add(tempHashMap);  
+              
+        }  
+          
+          
+        return arrayList;  
+          
+    }  
+    
+    /**
+     * å¤„ç†æŒ‰ä¸‹è¿”å›æŒ‰é’®çš„äº‹ä»¶çš„æ–¹æ³•
+     */
+    public void OnBtnBackClick(View view){   
+    	this.viewPager.setCurrentItem(0);
+    }
+    
+    
+    private void CheckNetWork()
+    {
+
+		//è·å¾—ç½‘ç»œçŠ¶å†µ
 		ConnectivityManager connectMgr = (ConnectivityManager) this
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
          
         NetworkInfo info = connectMgr.getActiveNetworkInfo();
         if(info==null)
         {
-        	Toast.makeText(getApplicationContext(), "ÎŞ¿ÉÓÃÍøÂç",Toast.LENGTH_SHORT).show();
-        	Dialog dialog=new AlertDialog.Builder(this).setTitle("ÎŞ¿ÉÓÃÍøÂç").setMessage("Ã»ÓĞÍøÂç¿ÉÊÇÌı²»³ÉµÄDA¡îZE").setPositiveButton("È·¶¨",
+        	Toast.makeText(getApplicationContext(), "æ— å¯ç”¨ç½‘ç»œ",Toast.LENGTH_SHORT).show();
+        	Dialog dialog=new AlertDialog.Builder(this).setTitle("æ— å¯ç”¨ç½‘ç»œ").setMessage("æ²¡æœ‰ç½‘ç»œå¯æ˜¯å¬ä¸æˆçš„DAâ˜†ZE").setPositiveButton("ç¡®å®š",
         			new DialogInterface.OnClickListener() {
         	      	@Override
         	      	public void onClick(DialogInterface dialog, int which) {
@@ -678,132 +485,18 @@ public class _hmMusic extends Activity implements AnimationListener {
         }
         if(info.getType() != ConnectivityManager.TYPE_WIFI)
         {
-        	Dialog dialog=new AlertDialog.Builder(this).setTitle("ÕıÔÚÊ¹ÓÃÒÆ¶¯ÍøÂç").setMessage("Ã»ÓĞÍøÂç¿ÉÊÇÌı²»³ÉµÄDA¡îZE").setPositiveButton("È·¶¨",
+        	Dialog dialog=new AlertDialog.Builder(this).setTitle("æ­£åœ¨ä½¿ç”¨ç§»åŠ¨ç½‘ç»œ").setMessage("æ²¡æœ‰ç½‘ç»œå¯æ˜¯å¬ä¸æˆçš„DAâ˜†ZE").setPositiveButton("ç¡®å®š",
         		new DialogInterface.OnClickListener() {
     	      	@Override
     	      	public void onClick(DialogInterface dialog, int which) {
     	      		System.exit(0);
     	      	}
     	    }).create(); 
-        	if(conf.setting.get("ifRunGPRS").equals("false"))dialog.show();  
-        	Toast.makeText(getApplicationContext(), "ÕıÔÚÊ¹ÓÃÒÆ¶¯ÍøÂç£¬ÍÁºÀ£¬ÎÒÃÇ×öÅóÓÑ°É",Toast.LENGTH_SHORT).show();
-        	Toast.makeText(getApplicationContext(), "Ò»Ò¹Ã»¹ØÁ÷Á¿£¬·¿×Ó¾ÍÊÇÒÆ¶¯µÄÁË¡­¡­",Toast.LENGTH_SHORT).show();
+        	if(config.conf.setting.get("ifRunGPRS").equals("false"))dialog.show();  
+        	Toast.makeText(getApplicationContext(), "æ­£åœ¨ä½¿ç”¨ç§»åŠ¨ç½‘ç»œï¼ŒåœŸè±ªï¼Œæˆ‘ä»¬åšæœ‹å‹å§",Toast.LENGTH_SHORT).show();
+        	Toast.makeText(getApplicationContext(), "ä¸€å¤œæ²¡å…³æµé‡ï¼Œæˆ¿å­å°±æ˜¯ç§»åŠ¨çš„äº†â€¦â€¦",Toast.LENGTH_SHORT).show();
         	
-        	if(conf.setting.get("ifRunGPRS").equals("false"))return;
+        	if(config.conf.setting.get("ifRunGPRS").equals("false"))return;
         }
-        
-        
-		startService(new Intent("org.hmoe.hm_music.SERVICE_DEMO")); 
-		
-		NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);               
-		Notification n = new Notification(R.drawable.ic_launcher, "hÃÈÔÚÏßÒôÀÖ!", System.currentTimeMillis());             
-		n.flags = Notification.FLAG_NO_CLEAR;                
-		Intent i = new Intent(getApplicationContext(), _hmMusic.class);
-		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);           
-		//PendingIntent
-		//i.setAction(Intent.ACTION_MAIN);
-		//i.setAction(Intent.ACTION_DEFAULT);
-        //i.addCategory(Intent.CATEGORY_LAUNCHER);
-		PendingIntent contentIntent  = PendingIntent.getActivity(this, 0, i, 0);  
-		Random random = new Random();
-		
-		                 
-		n.setLatestEventInfo(
-				getApplicationContext(),
-		        "hÃÈÔÚÏßÒôÀÖ", 
-		        titleTagList.get(random.nextInt(titleTagList.size())), 
-		        contentIntent);
-		nm.notify(R.string.app_name, n);
-		
-		initWebView();
-        
-       
-        mp.setOnCompletionListener(new OnCompletionListener(){
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                mWebView.loadUrl("javascript:onend()");
-            }});
-        
-    }   
-       
-    @Override  
-    public void onAnimationRepeat(Animation animation) {   
-           
-    }   
-    
-    
-    private void addTitleTagList()
-    {
-    	titleTagList.add("ÄãÕæµ±×Ô¼ºÊÇ´óĞ¡½ã°¡");
-    	titleTagList.add("¹Ô¹Ô¡áÕ¾ºÃ");
-    	titleTagList.add("²»½»450»¹ÏëÍæÓÎÏ·");
-    	titleTagList.add("²»×öËÀ¾Í²»»áËÀ");
-    	titleTagList.add("ÈË×÷ËÀ¾Í»áËÀ");
-    	titleTagList.add("»¹¼ÇµÃ1999ÄêµÄÄÇĞ©ÊÂÇéÃ´");
-    	titleTagList.add("ÃÈ¾ÍÊÇÕıÒå");
-    	titleTagList.add("Æ¶Èé²ÅÊÇÏ¡È±µÄ¼ÛÖµ");
-    	titleTagList.add("Ğ¡Ñ§ÉúÕæÊÇÌ«°ôÁË");
-    	titleTagList.add("ÕâÃ´¿É°®µÄÒ»¶¨ÊÇÄĞº¢×Ó");
-    	titleTagList.add("ÓĞ±¾ÊÂ·ÅÑ§±ğ×ß");
-    	titleTagList.add("³ÔÎÒ´óŒÅÀ²");
     }
-    
-    private Boolean downloadUriToFile(String urlDownload,String fileName)
-    {    	//ÒªÏÂÔØµÄÎÄ¼şÂ·¾¶
-    	//urlDownload =  "http://192.168.3.39/text.txt";
-    	//urlDownload = "http://www.baidu.com/img/baidu_sylogo1.gif";
-    	// »ñµÃ´æ´¢¿¨Â·¾¶£¬¹¹³É ±£´æÎÄ¼şµÄÄ¿±êÂ·¾¶
-        
-    	String dirName = "";
-    	dirName = conf.setting.get("cacheLocation");
-    	File f = new File(dirName);
-    	if(!f.exists())
-    	{
-    	    f.mkdir();
-    	}
-    	//×¼±¸Æ´½ÓĞÂµÄÎÄ¼şÃû£¨±£´æÔÚ´æ´¢¿¨ºóµÄÎÄ¼şÃû£©
-    	String newFilename = dirName + fileName;
-    	File file = new File(newFilename);
-    	//Èç¹ûÄ¿±êÎÄ¼şÒÑ¾­´æÔÚ£¬ÔòÉ¾³ı¡£²úÉú¸²¸Ç¾ÉÎÄ¼şµÄĞ§¹û
-    	if(file.exists())
-    	{
-    	    file.delete();
-    	}
-    	try {
-    	         // ¹¹ÔìURL   
-    	         URL url = new URL(urlDownload);   
-    	         // ´ò¿ªÁ¬½Ó   
-    	         URLConnection con = url.openConnection();
-    	         //»ñµÃÎÄ¼şµÄ³¤¶È
-    	         int contentLength = con.getContentLength();
-    	         System.out.println("³¤¶È :"+contentLength);
-    	         // ÊäÈëÁ÷   
-    	         InputStream is = con.getInputStream();  
-    	         // 1KµÄÊı¾İ»º³å   
-    	         byte[] bs = new byte[1024];   
-    	         // ¶ÁÈ¡µ½µÄÊı¾İ³¤¶È   
-    	         int len;   
-    	         // Êä³öµÄÎÄ¼şÁ÷   
-    	         OutputStream os = new FileOutputStream(newFilename);   
-    	         // ¿ªÊ¼¶ÁÈ¡   
-    	         while ((len = is.read(bs)) != -1) {   
-    	             os.write(bs, 0, len);   
-    	         }  
-    	         // Íê±Ï£¬¹Ø±ÕËùÓĞÁ´½Ó   
-    	         os.close();  
-    	         is.close();
-    	            
-    	} catch (Exception e) {
-    	        e.printStackTrace();
-    	        
-    	        
-    	        Message msg=mHandler.obtainMessage(MSG_FAILURE);
-    	        msg.obj=fileName;
-    	        msg.sendToTarget();
-    	        return false;
-    	}
-    	return true;
-    }
-    
-    
 }

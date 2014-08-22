@@ -5,5 +5,10 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="lib" path="D:/软件开发/android/adt-bundle-windows-x86_64-20130917/adt-bundle-windows-x86_64-20130917/sdk/platforms/android-18/android.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://developer.android.com/reference/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

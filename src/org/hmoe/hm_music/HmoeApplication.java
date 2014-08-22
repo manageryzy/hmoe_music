@@ -1,21 +1,20 @@
-package org.hmoe.hm_music;
+ï»¿package org.hmoe.hm_music;
+
+import org.hmoe.hm_music.CrashHandler.CrashHandler;
 
 import android.app.Application;  
   
 /** 
- * ÔÚ¿ª·¢Ó¦ÓÃÊ±¶¼»áºÍActivity´ò½»µÀ£¬¶øApplicationÊ¹ÓÃµÄ¾ÍÏà¶Ô½ÏÉÙÁË¡£ 
- * ApplicationÊÇÓÃÀ´¹ÜÀíÓ¦ÓÃ³ÌĞòµÄÈ«¾Ö×´Ì¬µÄ£¬±ÈÈçÔØÈë×ÊÔ´ÎÄ¼ş¡£ 
- * ÔÚÓ¦ÓÃ³ÌĞòÆô¶¯µÄÊ±ºòApplication»áÊ×ÏÈ´´½¨£¬È»ºó²Å»á¸ù¾İÇé¿ö(Intent)Æô¶¯ÏàÓ¦µÄActivity»òÕßService¡£ 
- * ÔÚ±¾ÎÄ½«ÔÚApplicationÖĞ×¢²áÎ´²¶»ñÒì³£´¦ÀíÆ÷¡£ 
+ * åº”ç”¨çš„Applicationï¼Œç”¨æ¥è‡ªå®šä¹‰CrashHandler
  */  
 public class HmoeApplication extends Application {  
     @Override  
     public void onCreate() {  
         super.onCreate();  
         CrashHandler crashHandler = CrashHandler.getInstance();  
-        // ×¢²ácrashHandler  
+        // æ³¨å†ŒcrashHandler  
         crashHandler.init(getApplicationContext());  
-        // ·¢ËÍÒÔÇ°Ã»·¢ËÍµÄ±¨¸æ(¿ÉÑ¡)  
+        // å‘é€ä»¥å‰æ²¡å‘é€çš„æŠ¥å‘Š(å¯é€‰)  
         crashHandler.sendPreviousReportsToServer();  
     }  
 }  
