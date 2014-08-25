@@ -2,26 +2,42 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/FrameLayout1"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="120dp" >
 
     <ImageView
-        android:id="@+id/play_btn_back"
+        android:id="@+id/MainListBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="fill"
-        android:scaleType="fitXY"
-        android:src="@drawable/hmoe_music_ui_mobile_welcome" />
+        android:adjustViewBounds="false"
+        android:scaleType="centerCrop"
+        android:src="@drawable/hmoe_music_ui_mobile_play_list_bg2" />
 
-    <TextView
-        android:id="@+id/textView1"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="@string/app_name"
-        android:textColor="#FFFFFF"
-        android:textSize="@android:dimen/app_icon_size"
-        android:textStyle="bold"
-        android:typeface="serif" />
+        android:gravity="center" >
+
+        <ImageView
+            android:id="@+id/MainListIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="108dp"
+            android:layout_gravity="right|center"
+            android:layout_marginRight="20dp"
+            android:scaleType="center"
+            android:src="@drawable/hmoe_logo" />
+
+        <TextView
+            android:id="@+id/ItemName"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/app_name"
+            android:textColor="#FFFFFF"
+            android:textSize="72sp"
+            android:textStyle="bold"
+            android:typeface="serif" />
+
+    </LinearLayout>
 
 </FrameLayout>

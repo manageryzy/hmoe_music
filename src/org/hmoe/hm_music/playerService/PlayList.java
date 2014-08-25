@@ -17,7 +17,7 @@ import android.util.Log;
  *
  */
 public class PlayList {
-	class PlayListNode
+	public class PlayListNode
 	{
 		public String MusicId;//音乐的id
 		public String FileName;//音乐的文件名，就是保存在本地的文件名
@@ -64,7 +64,7 @@ public class PlayList {
 	{
 		try
 		{
-			return theList.get(index);
+			return theList.get(index+"");
 		}
 		catch(Exception e)
 		{
@@ -146,13 +146,9 @@ public class PlayList {
 					newNode.FileName=theSong.getString("music_id")+".mp3";
 					newNode.FileUri=config.MusicResURI+theSong.getString("music_id");
 					newNode.Title=theSong.getString("title");
-					newNode.Album=theSong.getString("album");
-					newNode.LyricFileName=theSong.getString("music_id")+".lrc";
-					newNode.LyricUri=config.LyricResURI+theSong.getString("lrc");
 					newNode.AlbumPicFileName=theSong.getString("music_id")+"_album.jpg";
-					newNode.AlbumPicUri=config.AblumResURI+theSong.getString("bg_video");
+					newNode.LyricFileName=theSong.getString("music_id")+".lrc";
 					newNode.BGPicFileName=theSong.getString("music_id")+"_bg.jpg";
-					newNode.BGPicUri=config.BGPicResURI+theSong.getString("bg");
 				}
 				catch(JSONException e)
 				{
@@ -160,7 +156,55 @@ public class PlayList {
 					e.getCause();
 					Log.e("PlayList", "error in reading some item in json.");
 					theList.remove(newNode);
+					continue;
 				}
+					
+					
+				try
+				{	
+					newNode.Album=theSong.getString("album");
+				}
+				catch(JSONException e)
+				{
+					newNode.Album="";
+					e.getCause();
+					Log.i("PlayList", "error in reading album in json.");
+				}
+				
+				try
+				{
+					newNode.LyricUri=config.LyricResURI+theSong.getString("lrc");
+				}
+				catch(JSONException e)
+				{
+					newNode.LyricUri="";
+					e.getCause();
+					Log.i("PlayList", "error in reading lyric in json.");
+				}	
+				
+				try
+				{
+
+					newNode.AlbumPicUri=config.AblumResURI+theSong.getString("bg_video");
+				}
+				catch(JSONException e)
+				{
+					newNode.AlbumPicUri="";
+					e.getCause();
+					Log.i("PlayList", "error in reading AlbumPicUri in json.");
+				}
+				
+				try
+				{
+					newNode.BGPicUri=config.BGPicResURI+theSong.getString("bg");
+				}
+				catch(JSONException e)
+				{
+					newNode.BGPicUri="";
+					e.getCause();
+					Log.i("PlayList", "error in reading BGPicUri in json.");
+				}
+				
 			}
 			return true;
 		} catch (Exception e) {

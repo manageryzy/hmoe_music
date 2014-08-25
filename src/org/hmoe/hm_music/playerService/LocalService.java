@@ -99,10 +99,15 @@ public class LocalService extends Service {
      */
     public boolean setPlayerSongUri(String uri)
     {
-    	try {
+    	
     		mp.stop();
     		mp.reset();
-			mp.setDataSource(uri);
+			try {
+				mp.setDataSource(uri);
+			} catch (Exception e) {
+				e.getCause();
+				e.printStackTrace();
+			}
 			new Thread(){  
                 public void run(){  
                 	try {
@@ -116,19 +121,7 @@ public class LocalService extends Service {
                 }  
             }.start();  
 			
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-			return false;
-		} catch (SecurityException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
+		
     	return true;
     }
     

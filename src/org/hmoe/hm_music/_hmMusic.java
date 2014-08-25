@@ -8,6 +8,7 @@ import java.util.Random;
 
 import org.hmoe.hm_music.playerService.LocalService;
 import org.hmoe.hm_music.playerService.PlayList;
+import org.hmoe.hm_music.playerService.PlayList.PlayListNode;
 import org.hmoe.hm_music.view.PlayPageView;
 
 import android.annotation.SuppressLint;
@@ -45,12 +46,16 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
+import android.widget.AbsListView.LayoutParams;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
+
 
 public class _hmMusic extends Activity implements AnimationListener {
 	
@@ -75,6 +80,7 @@ public class _hmMusic extends Activity implements AnimationListener {
 	private Button btnYes=null;
 	private Button btnNo=null;
 	public static SQLiteDatabase db = null;
+//	private Handler handler=new Handler();
 	
 	
 	private ServiceConnection mConnection = new ServiceConnection() { 
@@ -98,29 +104,8 @@ public class _hmMusic extends Activity implements AnimationListener {
 	        } 
 	};
 	
-	@SuppressLint("HandlerLeak")
-	public Handler mHandler = new Handler(){  
-        @Override  
-        public void handleMessage(Message msg) {  
-            switch (msg.what) {  
-            case MSG_SUCCESS:  
-                
-                Toast.makeText(getApplication(), "下载歌曲成功"+(String)msg.obj, Toast.LENGTH_LONG).show();  
-                break;   
-  
-            case MSG_FAILURE:    
-                Toast.makeText(getApplication(), "下载歌曲失败"+(String)msg.obj, Toast.LENGTH_LONG).show(); 
-                break;  
-            case MSG_SHOW_MENU:
-            	openOptionsMenu();
-            	break;
-            case MSG_DOWNLOAD_FINISH:
-            	Toast.makeText(getApplicationContext(), "全部下载任务完成",Toast.LENGTH_SHORT).show();
-            	break;
-            }  
-            super.handleMessage(msg);  
-        }         
-    };  
+
+	public Handler mHandler ; 
     
     private void init()
     {
@@ -170,7 +155,9 @@ public class _hmMusic extends Activity implements AnimationListener {
         alphaAnimation.setFillEnabled(true); //启动Fill保持   
         alphaAnimation.setFillAfter(true);  //设置动画的最后一帧是保持在View上面   
         imageView.setAnimation(alphaAnimation);   
-        alphaAnimation.setAnimationListener(this);  //为动画设置监听   
+        alphaAnimation.setAnimationListener(this);  //为动画设置监听  
+        
+        createHandler();
         
         startService(new Intent("org.hmoe.hm_music.SERVICE_DEMO")); 
 		
@@ -298,11 +285,11 @@ public class _hmMusic extends Activity implements AnimationListener {
 	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		listView.getChildAt(0).setBackgroundResource(R.drawable.hmoe_music_ui_mobile_welcome);
 	    if (keyCode == KeyEvent.KEYCODE_BACK) {
 	        moveTaskToBack(true);//true对任何Activity都适用
 	        return true;
 	    }
+	    
 	    return super.onKeyDown(keyCode, event);
 	}
 	
@@ -317,7 +304,61 @@ public class _hmMusic extends Activity implements AnimationListener {
         //动画结束时结束欢迎界面并转到软件的主界面   
     	setContentView(R.layout.main_frame);
     	
+    	initSliderView();
+        
+		try{
+			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+					.detectDiskReads().detectDiskWrites().detectNetwork()
+					.penaltyLog().build());
+			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+					.detectLeakedSqlLiteObjects().penaltyLog().penaltyDeath()
+					.build());
+		}
+		catch (Exception e)
+		{
+			e.getCause();
+			e.printStackTrace();
+		}
+		
+		CheckNetWork();
+        
+        mBoundService.RegMainActvity(this);
+//        mp.setOnCompletionListener(new OnCompletionListener(){
+//            @Override
+//            public void onCompletion(MediaPlayer mp) {
+//                
+//            }});
+        
+        ResizeListLayout();
+    }   
+    
+       
+    @Override  
+    public void onAnimationRepeat(Animation animation) {   
     	
+    }   
+    
+    
+    private void addTitleTagList()
+    {
+    	titleTagList.add("你真当自己是大小姐啊");
+    	titleTagList.add("乖乖♂站好");
+    	titleTagList.add("不交450还想玩游戏");
+    	titleTagList.add("不做死就不会死");
+    	titleTagList.add("人作死就会死");
+    	titleTagList.add("还记得1999年的那些事情么");
+    	titleTagList.add("萌就是正义");
+    	titleTagList.add("贫乳才是稀缺的价值");
+    	titleTagList.add("小学生真是太棒了");
+    	titleTagList.add("这么可爱的一定是男孩子");
+    	titleTagList.add("有本事放学别走");
+    	titleTagList.add("吃我大屌啦");
+    }
+    
+    
+    private void initSliderView()
+    {
+    	//set up the pager
     	viewPager = (ViewPager) findViewById(R.id.viewpager); 
     	getLayoutInflater();
 		LayoutInflater lf = LayoutInflater.from(this);  
@@ -332,9 +373,9 @@ public class _hmMusic extends Activity implements AnimationListener {
         viewList.add(view3);  
         
         titleList = new ArrayList<String>();// 每个页面的Title数据  
-        titleList.add("wp");  
-        titleList.add("jy");  
-        titleList.add("jh");  
+        titleList.add("view1");  
+        titleList.add("view2");  
+        titleList.add("view3");  
         
         pagerAdapter = new PagerAdapter() {  
         	  
@@ -378,76 +419,110 @@ public class _hmMusic extends Activity implements AnimationListener {
         };  
         viewPager.setAdapter(pagerAdapter);  
         
-        //
-        listView=(ListView)view1.findViewById(R.id.MainListView);
-    	SimpleAdapter adapter = new SimpleAdapter(this, getData(), R.layout.list_item_layout,  
-                new String[]{"image","item"}, new int[]{R.id.play_btn_back,R.id.textView1});  
-        listView.setAdapter(adapter);  
-
-		
-		try{
-			StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-					.detectDiskReads().detectDiskWrites().detectNetwork()
-					.penaltyLog().build());
-			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-					.detectLeakedSqlLiteObjects().penaltyLog().penaltyDeath()
-					.build());
-		}
-		catch (Exception e)
-		{
-			e.getCause();
-			e.printStackTrace();
-		}
-		
-		CheckNetWork();
         
-        mBoundService.RegMainActvity(this);
-//        mp.setOnCompletionListener(new OnCompletionListener(){
-//            @Override
-//            public void onCompletion(MediaPlayer mp) {
-//                
-//            }});
-    }   
-    
-       
-    @Override  
-    public void onAnimationRepeat(Animation animation) {   
-    	
-    }   
-    
-    
-    private void addTitleTagList()
-    {
-    	titleTagList.add("你真当自己是大小姐啊");
-    	titleTagList.add("乖乖♂站好");
-    	titleTagList.add("不交450还想玩游戏");
-    	titleTagList.add("不做死就不会死");
-    	titleTagList.add("人作死就会死");
-    	titleTagList.add("还记得1999年的那些事情么");
-    	titleTagList.add("萌就是正义");
-    	titleTagList.add("贫乳才是稀缺的价值");
-    	titleTagList.add("小学生真是太棒了");
-    	titleTagList.add("这么可爱的一定是男孩子");
-    	titleTagList.add("有本事放学别走");
-    	titleTagList.add("吃我大屌啦");
+        //set up for view1
+        listView=(ListView)view1.findViewById(R.id.MainListView);
+    	SimpleAdapter adapter = new SimpleAdapter(this, getMainListData(), R.layout.list_item_layout,  
+                new String[]{"image","icon","item"}, new int[]{R.id.MainListBackground,R.id.MainListIcon,R.id.ItemName});  
+        listView.setAdapter(adapter); 
+        listView.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				
+				switch (position) {
+				case 0:
+					viewPager.setCurrentItem(1);
+					break;
+				
+				case 1:
+					viewPager.setCurrentItem(2);
+					break;
+				
+				case 3:
+					viewPager.setCurrentItem(3);
+					break;
+
+				default:
+					break;
+				}
+			}
+		});
+        
+        
+        //set up for view1
+        ListView listView3 = (ListView)view3.findViewById(R.id.PlayListView);
+    	SimpleAdapter adapter3 = new SimpleAdapter(this, getPlayListData(), R.layout.play_list_item_layout,  
+                new String[]{"image","icon","title","subtitle"}, new int[]{R.id.MainListBackground,R.id.MainListIcon,R.id.Title,R.id.SubTitle});  
+    	listView3.setAdapter(adapter3); 
+    	listView3.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				
+				mBoundService.setPlayerSongUri(config.conf.OriPlayList.getItem(position+1).FileUri);
+			}
+		});
     }
-    
-    
-    /** 
-     * @author chenzheng_java 
-     * @description 准备一些测试数据 
-     * @return 一个包含了数据信息的hashMap集合 
-     */  
-    private ArrayList<HashMap<String, Object>> getData(){  
+    private ArrayList<HashMap<String, Object>> getPlayListData(){  
         ArrayList<HashMap<String, Object>> arrayList = new ArrayList<HashMap<String,Object>>();  
-        for(int i=0;i<10;i++){  
-            HashMap<String, Object> tempHashMap = new HashMap<String, Object>();  
-            tempHashMap.put("image", R.drawable.ic_launcher);  
-            tempHashMap.put("item", "用户"+i);  
-            arrayList.add(tempHashMap);  
-              
-        }  
+        
+        int count = config.conf.OriPlayList.getCount();
+        for(int i=1;i<=count;i++)
+        {
+        	
+        	HashMap<String, Object> obj = new HashMap<String, Object>();  
+        	
+        	PlayListNode nowNode = config.conf.OriPlayList.getItem(i);
+        	switch(i%4)
+        	{
+        	case 0:
+        		obj.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg1);  
+        		break;
+        	case 1:
+        		obj.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg2);  
+        		break;
+        	case 2:
+        		obj.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg3);  
+        		break;
+        	case 3:
+        		obj.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg4);  
+        		break;
+        	}
+            
+            obj.put("icon", R.drawable.loading);  
+            obj.put("title", nowNode.Title);  
+            obj.put("subtitle", nowNode.Album);  
+            arrayList.add(obj);  
+        }
+        
           
+        return arrayList;  
+          
+    }  
+    
+    private ArrayList<HashMap<String, Object>> getMainListData(){  
+        ArrayList<HashMap<String, Object>> arrayList = new ArrayList<HashMap<String,Object>>();  
+        
+        HashMap<String, Object> obj1 = new HashMap<String, Object>();  
+        obj1.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg1);  
+        obj1.put("icon", R.drawable.main_list_icon0);  
+        obj1.put("item", "聆听音乐");  
+        arrayList.add(obj1);  
+              
+        HashMap<String, Object> obj2 = new HashMap<String, Object>();  
+        obj2.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg2);  
+        obj2.put("icon", R.drawable.main_list_icon1);  
+        obj2.put("item", "播放列表");  
+        arrayList.add(obj2);  
+        
+        HashMap<String, Object> obj3 = new HashMap<String, Object>();  
+        obj3.put("image", R.drawable.hmoe_music_ui_mobile_play_list_bg3);  
+        obj3.put("icon", R.drawable.main_list_icon2);  
+        obj3.put("item", "离线管理");  
+        arrayList.add(obj3);  
           
         return arrayList;  
           
@@ -498,5 +573,60 @@ public class _hmMusic extends Activity implements AnimationListener {
         	
         	if(config.conf.setting.get("ifRunGPRS").equals("false"))return;
         }
+    }
+    
+    private void ResizeListLayout()
+    {
+    	Thread t =new Thread(){  
+            public void run(){  
+            	
+            	mHandler.postDelayed(new Runnable() {
+ 			
+            		@Override
+            		public void run() {
+ 				
+            			//重新调ui大小
+            			LayoutParams ListLayoutParams = new LayoutParams(listView.getChildAt(0).getLayoutParams());
+            			ListLayoutParams.height=(findViewById(R.id.play_container).getHeight()-findViewById(R.id.play_header_layout).getHeight())/3;
+            			listView.getChildAt(0).setLayoutParams(ListLayoutParams);
+            		
+            			LayoutParams ListLayoutParams1 = new LayoutParams(listView.getChildAt(1).getLayoutParams());
+            			ListLayoutParams1.height=(findViewById(R.id.play_container).getHeight()-findViewById(R.id.play_header_layout).getHeight())/3;
+            			listView.getChildAt(1).setLayoutParams(ListLayoutParams1);
+            		
+            			LayoutParams ListLayoutParams2 = new LayoutParams(listView.getChildAt(2).getLayoutParams());
+            			ListLayoutParams2.height=(findViewById(R.id.play_container).getHeight()-findViewById(R.id.play_header_layout).getHeight())/3;
+            			listView.getChildAt(2).setLayoutParams(ListLayoutParams2);
+            		}
+            	},20);
+            }
+    	};
+    	t.start();
+    }
+    
+    private void createHandler()
+    {
+    	mHandler = new Handler(){  
+            @Override  
+            public void handleMessage(Message msg) {  
+                switch (msg.what) {  
+                case MSG_SUCCESS:  
+                    
+                    Toast.makeText(getApplication(), "下载歌曲成功"+(String)msg.obj, Toast.LENGTH_LONG).show();  
+                    break;   
+      
+                case MSG_FAILURE:    
+                    Toast.makeText(getApplication(), "下载歌曲失败"+(String)msg.obj, Toast.LENGTH_LONG).show(); 
+                    break;  
+                case MSG_SHOW_MENU:
+                	openOptionsMenu();
+                	break;
+                case MSG_DOWNLOAD_FINISH:
+                	Toast.makeText(getApplicationContext(), "全部下载任务完成",Toast.LENGTH_SHORT).show();
+                	break;
+                }  
+                super.handleMessage(msg);  
+            }         
+        };  
     }
 }

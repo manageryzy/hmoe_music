@@ -20,11 +20,12 @@
         android:scrollbars="none" >
 
         <ImageView
-            android:id="@+id/play_btn_back"
+            android:id="@+id/MainListBackground"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
+            android:onClick="OnBtnBackClick"
             android:src="@drawable/hmoe_music_ui_mobile_play_btnback" />
 
         <ImageView

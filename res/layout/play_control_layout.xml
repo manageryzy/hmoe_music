@@ -12,7 +12,7 @@
     tools:context="._hmMusic" >
 
     <ImageView
-        android:id="@+id/imageView1"
+        android:id="@+id/MainListIcon"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:scaleType="centerCrop"
@@ -44,7 +44,7 @@
                     android:src="@drawable/hmoe_logo" />
 
                 <ImageView
-                    android:id="@+id/play_btn_back"
+                    android:id="@+id/MainListBackground"
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -91,7 +91,7 @@
                     android:src="@drawable/test" />
 
                 <TextView
-                    android:id="@+id/textView1"
+                    android:id="@+id/Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -152,6 +152,7 @@
                 android:id="@+id/imageView5"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
                 android:src="@drawable/hmoe_music_ui_mobile_play_prev" />
 
             <ImageView
@@ -164,7 +165,9 @@
                 android:id="@+id/imageView3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
                 android:src="@drawable/hmoe_music_ui_mobile_play_next" />
+
         </LinearLayout>
     </LinearLayout>
 

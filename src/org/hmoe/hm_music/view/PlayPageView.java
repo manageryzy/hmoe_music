@@ -52,7 +52,7 @@ public class PlayPageView extends RelativeLayout {
 					@Override
 					public void run() {
 						LayoutParams PlayUpLayoutParams = new LayoutParams(findViewById(R.id.play_up_layout).getLayoutParams());
-			            PlayUpLayoutParams.height=findViewById(R.id.play_container).getHeight()-findViewById(R.id.play_down_layout).getHeight();
+			            PlayUpLayoutParams.height=findViewById(R.id.play_container).getHeight()-findViewById(R.id.play_down_layout).getHeight()-10;
 			            findViewById(R.id.play_up_layout).setLayoutParams(PlayUpLayoutParams);
 			            
 			            LyricX1 = findViewById(R.id.LyricView1).getLeft();
@@ -76,9 +76,6 @@ public class PlayPageView extends RelativeLayout {
 				findViewById(R.id.LyricView1).onTouchEvent(event);
 				return true;
 			}
-		Throwable t=null;
-		
-		t.getCause();
 		
 		return super.onTouchEvent(event);
 	}
